@@ -36,16 +36,13 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         if($user_id = $request->get('user_id')) {
-
             $response = $this->repository->getUsersJobs($user_id);
-
         }
-        elseif(Auth::user()->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID'))
+        elseif(in_array($request->__authenticatedUser->user_type , ['admin','superadmin']))  //Instead of env roles should be in database
         {
             $response = $this->repository->getAll($request);
         }
-
-        return response($response);
+        return response()->json($response, 200);   //must be status code if it's an api wether it's 500,200..etc
     }
 
     /**
@@ -55,7 +52,6 @@ class BookingController extends Controller
     public function show($id)
     {
         $job = $this->repository->with('translatorJobRel.user')->find($id);
-
         return response($job);
     }
 
@@ -82,8 +78,7 @@ class BookingController extends Controller
     {
         $data = $request->all();
         $cuser = $request->__authenticatedUser;
-        $response = $this->repository->updateJob($id, array_except($data, ['_token', 'submit']), $cuser);
-
+        $response = $this->repository->updateJob($id, $request->except(['_token', 'submit']), $cuser);
         return response($response);
     }
 
@@ -95,7 +90,6 @@ class BookingController extends Controller
     {
         $adminSenderEmail = config('app.adminemail');
         $data = $request->all();
-
         $response = $this->repository->storeJobEmail($data);
 
         return response($response);
@@ -124,9 +118,7 @@ class BookingController extends Controller
     {
         $data = $request->all();
         $user = $request->__authenticatedUser;
-
         $response = $this->repository->acceptJob($data, $user);
-
         return response($response);
     }
 
@@ -195,53 +187,44 @@ class BookingController extends Controller
     public function distanceFeed(Request $request)
     {
         $data = $request->all();
-
+        $distance = "";
+        $time = "";
+        $session = "";
+        $flagged = 'no';
+        $manually_handled = 'no';
+        $by_admin = 'no';
+        $admincomment = "";   
+        //All above variable should be in associative array instead of seprate
         if (isset($data['distance']) && $data['distance'] != "") {
             $distance = $data['distance'];
-        } else {
-            $distance = "";
         }
         if (isset($data['time']) && $data['time'] != "") {
             $time = $data['time'];
-        } else {
-            $time = "";
         }
-        if (isset($data['jobid']) && $data['jobid'] != "") {
+        if (isset($data['jobid']) && $data['jobid']) {
             $jobid = $data['jobid'];
         }
 
         if (isset($data['session_time']) && $data['session_time'] != "") {
             $session = $data['session_time'];
-        } else {
-            $session = "";
         }
 
         if ($data['flagged'] == 'true') {
             if($data['admincomment'] == '') return "Please, add comment";
             $flagged = 'yes';
-        } else {
-            $flagged = 'no';
-        }
-        
+        }        
         if ($data['manually_handled'] == 'true') {
             $manually_handled = 'yes';
-        } else {
-            $manually_handled = 'no';
         }
 
         if ($data['by_admin'] == 'true') {
             $by_admin = 'yes';
-        } else {
-            $by_admin = 'no';
         }
 
         if (isset($data['admincomment']) && $data['admincomment'] != "") {
             $admincomment = $data['admincomment'];
-        } else {
-            $admincomment = "";
         }
         if ($time || $distance) {
-
             $affectedRows = Distance::where('job_id', '=', $jobid)->update(array('distance' => $distance, 'time' => $time));
         }
 

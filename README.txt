@@ -39,3 +39,13 @@ OR
 Thank you!
 
 
+1. BookingController 
+User Roles should be defined in database schema and then assign it to the usel by using role user model instead of storing it to env file.
+Booking functions should optimized like: 'distanceFeed()' is very messy and lengthy. it should be simple and in associative array to deal with these type of situations.
+
+2. BookingRepository
+User roles and their jobs should be in database then fetch them by relational table like with one to many relation job_type -> jobs
+instead of ceil function we should use pagination function. BookingRepository have too much useless code and we can improve it by optimized the data and the way of data expressions.
+ 
+
+
